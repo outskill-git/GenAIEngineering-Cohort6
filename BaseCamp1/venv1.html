@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Environment Switching Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #2c3e50;
+      font-size: 2.5em;
+      background: linear-gradient(45deg, #3776ab, #ffd43b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .system-overview {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 40px;
+      border: 3px solid #6c757d;
+      position: relative;
+    }
+
+    .system-title {
+      position: absolute;
+      top: -15px;
+      left: 30px;
+      background: white;
+      padding: 5px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #495057;
+      border: 2px solid #6c757d;
+    }
+
+    .environments-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .environment {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      position: relative;
+      transition: all 0.3s ease;
+      border: 3px solid transparent;
+    }
+
+    .environment.active {
+      border-color: #28a745;
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px rgba(40, 167, 69, 0.3);
+    }
+
+    .environment.inactive {
+      opacity: 0.6;
+      transform: scale(0.95);
+    }
+
+    .env-header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .env-title {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .global-python .env-title {
+      color: #6c757d;
+    }
+
+    .project-a .env-title {
+      color: #007bff;
+    }
+
+    .project-b .env-title {
+      color: #dc3545;
+    }
+
+    .env-status {
+      font-size: 0.9em;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .python-info {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+    }
+
+    .packages-list {
+      margin: 15px 0;
+    }
+
+    .packages-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #495057;
+    }
+
+    .package-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 4px solid #28a745;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .global-python .package-item {
+      border-left-color: #6c757d;
+    }
+
+    .project-a .package-item {
+      border-left-color: #007bff;
+    }
+
+    .project-b .package-item {
+      border-left-color: #dc3545;
+    }
+
+    .package-version {
+      font-weight: bold;
+      color: #495057;
+    }
+
+    .terminal-section {
+      background: #1e1e1e;
+      border-radius: 15px;
+      padding: 25px;
+      margin: 30px 0;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+    }
+
+    .terminal-header {
+      background: #333;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px 8px 0 0;
+      margin: -25px -25px 20px -25px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .terminal-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .terminal-button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .btn-close {
+      background: #ff5f56;
+    }
+
+    .btn-minimize {
+      background: #ffbd2e;
+    }
+
+    .btn-maximize {
+      background: #27ca3f;
+    }
+
+    .command-line {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    .prompt {
+      color: #00ff00;
+    }
+
+    .command {
+      color: #ffffff;
+    }
+
+    .output {
+      color: #87ceeb;
+      margin-left: 20px;
+    }
+
+    .error {
+      color: #ff6b6b;
+      margin-left: 20px;
+    }
+
+    .control-panel {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      border-radius: 15px;
+      padding: 25px;
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .control-title {
+      color: #1976d2;
+      font-size: 1.4em;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .environment-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .env-button {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .env-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .env-button.global {
+      background: linear-gradient(45deg, #6c757d, #495057);
+    }
+
+    .env-button.project-a {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+    }
+
+    .env-button.project-b {
+      background: linear-gradient(45deg, #dc3545, #c82333);
+    }
+
+    .scenario-explanation {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border-radius: 15px;
+      padding: 25px;
+      margin: 30px 0;
+      border-left: 5px solid #ff9800;
+    }
+
+    .scenario-title {
+      color: #e65100;
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .scenario-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .scenario-step {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 4px solid #ff9800;
+    }
+
+    .step-title {
+      font-weight: bold;
+      color: #e65100;
+      margin-bottom: 10px;
+    }
+
+    .step-description {
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .step-command {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .file-structure {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      border-radius: 15px;
+      padding: 25px;
+      margin: 30px 0;
+      border-left: 5px solid #4caf50;
+    }
+
+    .file-structure-title {
+      color: #2e7d32;
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .file-tree {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 20px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .highlight {
+      background: #f39c12;
+      color: #2c3e50;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    @media (max-width: 1024px) {
+      .environments-container {
+        grid-template-columns: 1fr;
+      }
+
+      .environment-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .scenario-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🐍 Python Environment Switching Demo</h1>
+
+    <!-- SYSTEM OVERVIEW -->
+    <div class="system-overview">
+      <div class="system-title">💻 Global System Perspective</div>
+
+      <div class="environments-container">
+        <!-- GLOBAL PYTHON -->
+        <div class="environment global-python active" id="global-env">
+          <div class="env-header">
+            <div class="env-title">🌍 Global Python</div>
+            <div class="env-status status-active">CURRENTLY ACTIVE</div>
+          </div>
+
+          <div class="python-info">
+            Python 3.9.7 (/usr/bin/python3)
+          </div>
+
+          <div class="packages-list">
+            <div class="packages-title">System Packages:</div>
+            <div class="package-item">
+              <span>pip</span>
+              <span class="package-version">21.2.4</span>
+            </div>
+            <div class="package-item">
+              <span>setuptools</span>
+              <span class="package-version">57.4.0</span>
+            </div>
+            <div class="package-item">
+              <span>wheel</span>
+              <span class="package-version">0.37.1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT A ENVIRONMENT -->
+        <div class="environment project-a inactive" id="project-a-env">
+          <div class="env-header">
+            <div class="env-title">🚀 Project A (Web App)</div>
+            <div class="env-status status-inactive">INACTIVE</div>
+          </div>
+
+          <div class="python-info">
+            Python 3.9.7 (venv/bin/python)
+          </div>
+
+          <div class="packages-list">
+            <div class="packages-title">Installed Packages:</div>
+            <div class="package-item">
+              <span>Django</span>
+              <span class="package-version">3.2.13</span>
+            </div>
+            <div class="package-item">
+              <span>requests</span>
+              <span class="package-version">2.25.1</span>
+            </div>
+            <div class="package-item">
+              <span>psycopg2</span>
+              <span class="package-version">2.8.6</span>
+            </div>
+            <div class="package-item">
+              <span>pillow</span>
+              <span class="package-version">8.3.2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT B ENVIRONMENT -->
+        <div class="environment project-b inactive" id="project-b-env">
+          <div class="env-header">
+            <div class="env-title">🤖 Project B (ML App)</div>
+            <div class="env-status status-inactive">INACTIVE</div>
+          </div>
+
+          <div class="python-info">
+            Python 3.9.7 (ml_env/bin/python)
+          </div>
+
+          <div class="packages-list">
+            <div class="packages-title">Installed Packages:</div>
+            <div class="package-item">
+              <span>Django</span>
+              <span class="package-version">4.2.7</span>
+            </div>
+            <div class="package-item">
+              <span>numpy</span>
+              <span class="package-version">1.24.3</span>
+            </div>
+            <div class="package-item">
+              <span>pandas</span>
+              <span class="package-version">2.0.3</span>
+            </div>
+            <div class="package-item">
+              <span>scikit-learn</span>
+              <span class="package-version">1.3.0</span>
+            </div>
+            <div class="package-item">
+              <span>tensorflow</span>
+              <span class="package-version">2.13.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="control-panel">
+      <div class="control-title">🎛️ Environment Control Panel</div>
+      <p style="margin-bottom: 20px; color: #666;">Click buttons below to simulate switching between environments:</p>
+      <div class="environment-buttons">
+        <button class="env-button global" onclick="activateEnvironment('global')">
+          🌍 Use Global Python
+        </button>
+        <button class="env-button project-a" onclick="activateEnvironment('project-a')">
+          🚀 Activate Project A
+        </button>
+        <button class="env-button project-b" onclick="activateEnvironment('project-b')">
+          🤖 Activate Project B
+        </button>
+      </div>
+    </div>
+
+    <!-- TERMINAL SIMULATION -->
+    <div class="terminal-section">
+      <div class="terminal-header">
+        <div class="terminal-buttons">
+          <div class="terminal-button btn-close"></div>
+          <div class="terminal-button btn-minimize"></div>
+          <div class="terminal-button btn-maximize"></div>
+        </div>
+        <span>Terminal - Environment Switching Demo</span>
+      </div>
+      <div id="terminal-content">
+        <div class="command-line">
+          <span class="prompt">user@system:~$</span> <span class="command">python --version</span>
+        </div>
+        <div class="command-line">
+          <span class="output">Python 3.9.7</span>
+        </div>
+        <div class="command-line">
+          <span class="prompt">user@system:~$</span> <span class="command">which python</span>
+        </div>
+        <div class="command-line">
+          <span class="output">/usr/bin/python3</span>
+        </div>
+        <div class="command-line">
+          <span class="prompt">user@system:~$</span> <span class="command">pip list</span>
+        </div>
+        <div class="command-line">
+          <span class="output">pip (21.2.4), setuptools (57.4.0), wheel (0.37.1)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENARIO EXPLANATION -->
+    <div class="scenario-explanation">
+      <div class="scenario-title">📚 Real-World Scenario</div>
+      <p style="margin-bottom: 20px; color: #666; line-height: 1.6;">
+        You're a developer working on two different projects simultaneously. Both use Django but require different
+        versions
+        due to compatibility requirements. Here's how virtual environments solve this problem:
+      </p>
+
+      <div class="scenario-steps">
+        <div class="scenario-step">
+          <div class="step-title">🚀 Project A: Legacy Web App</div>
+          <div class="step-description">
+            Client's existing app built with Django 3.2. Must maintain compatibility with PostgreSQL and older Pillow
+            version.
+          </div>
+          <div class="step-command">source project_a/venv/bin/activate</div>
+        </div>
+
+        <div class="scenario-step">
+          <div class="step-title">🤖 Project B: ML Application</div>
+          <div class="step-description">
+            New machine learning project using latest Django 4.2 with TensorFlow, NumPy, and modern data science stack.
+          </div>
+          <div class="step-command">source project_b/ml_env/bin/activate</div>
+        </div>
+
+        <div class="scenario-step">
+          <div class="step-title">🌍 Global Python</div>
+          <div class="step-description">
+            Clean system Python with minimal packages. Used for creating new environments and general system tasks.
+          </div>
+          <div class="step-command">deactivate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILE STRUCTURE -->
+    <div class="file-structure">
+      <div class="file-structure-title">📁 Project Directory Structure</div>
+      <div class="file-tree">
+        /home/user/projects/
+        ├── project_a/ <span class="highlight"># Web App Project</span>
+        │ ├── venv/ <span class="highlight"># Virtual Environment</span>
+        │ │ ├── bin/
+        │ │ │ ├── activate <span class="highlight"># Activation script</span>
+        │ │ │ └── python <span class="highlight"># Python 3.9.7 + Django 3.2</span>
+        │ │ └── lib/python3.9/site-packages/
+        │ │ ├── django/ <span class="highlight"># Django 3.2.13</span>
+        │ │ ├── requests/ <span class="highlight"># requests 2.25.1</span>
+        │ │ └── psycopg2/ <span class="highlight"># psycopg2 2.8.6</span>
+        │ ├── manage.py
+        │ ├── requirements.txt
+        │ └── webapp/
+        │
+        ├── project_b/ <span class="highlight"># ML Project</span>
+        │ ├── ml_env/ <span class="highlight"># Virtual Environment</span>
+        │ │ ├── bin/
+        │ │ │ ├── activate <span class="highlight"># Activation script</span>
+        │ │ │ └── python <span class="highlight"># Python 3.9.7 + Django 4.2</span>
+        │ │ └── lib/python3.9/site-packages/
+        │ │ ├── django/ <span class="highlight"># Django 4.2.7</span>
+        │ │ ├── numpy/ <span class="highlight"># numpy 1.24.3</span>
+        │ │ ├── pandas/ <span class="highlight"># pandas 2.0.3</span>
+        │ │ └── tensorflow/ <span class="highlight"># tensorflow 2.13.0</span>
+        │ ├── model.py
+        │ ├── requirements.txt
+        │ └── data/
+        │
+        └── /usr/bin/python3 <span class="highlight"># Global System Python</span>
+        └── site-packages/
+        ├── pip/ <span class="highlight"># pip 21.2.4</span>
+        ├── setuptools/ <span class="highlight"># setuptools 57.4.0</span>
+        └── wheel/ <span class="highlight"># wheel 0.37.1</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function activateEnvironment(envType) {
+      // Reset all environments
+      const environments = document.querySelectorAll('.environment');
+      environments.forEach(env => {
+        env.classList.remove('active');
+        env.classList.add('inactive');
+        const status = env.querySelector('.env-status');
+        status.textContent = 'INACTIVE';
+        status.className = 'env-status status-inactive';
+      });
+
+      // Activate selected environment
+      let activeEnv, terminalContent;
+
+      switch (envType) {
+        case 'global':
+          activeEnv = document.getElementById('global-env');
+          terminalContent = `
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">deactivate</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">python --version</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">Python 3.9.7</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">which python</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">/usr/bin/python3</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">pip list</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">pip (21.2.4), setuptools (57.4.0), wheel (0.37.1)</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">echo "Using global Python - minimal packages"</span>
+                        </div>
+                    `;
+          break;
+
+        case 'project-a':
+          activeEnv = document.getElementById('project-a-env');
+          terminalContent = `
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">cd project_a</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~/project_a$</span> <span class="command">source venv/bin/activate</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(venv) user@system:~/project_a$</span> <span class="command">python --version</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">Python 3.9.7</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(venv) user@system:~/project_a$</span> <span class="command">which python</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">/home/user/projects/project_a/venv/bin/python</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(venv) user@system:~/project_a$</span> <span class="command">pip show django</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">Name: Django, Version: 3.2.13</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(venv) user@system:~/project_a$</span> <span class="command">echo "Ready for legacy web app development"</span>
+                        </div>
+                    `;
+          break;
+
+        case 'project-b':
+          activeEnv = document.getElementById('project-b-env');
+          terminalContent = `
+                        <div class="command-line">
+                            <span class="prompt">user@system:~$</span> <span class="command">cd project_b</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">user@system:~/project_b$</span> <span class="command">source ml_env/bin/activate</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(ml_env) user@system:~/project_b$</span> <span class="command">python --version</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">Python 3.9.7</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(ml_env) user@system:~/project_b$</span> <span class="command">which python</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">/home/user/projects/project_b/ml_env/bin/python</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(ml_env) user@system:~/project_b$</span> <span class="command">pip show django tensorflow</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="output">Django: 4.2.7, TensorFlow: 2.13.0</span>
+                        </div>
+                        <div class="command-line">
+                            <span class="prompt">(ml_env) user@system:~/project_b$</span> <span class="command">echo "Ready for ML development with latest packages"</span>
+                        </div>
+                    `;
+          break;
+      }
+
+      // Update visual state
+      activeEnv.classList.remove('inactive');
+      activeEnv.classList.add('active');
+      const activeStatus = activeEnv.querySelector('.env-status');
+      activeStatus.textContent = 'CURRENTLY ACTIVE';
+      activeStatus.className = 'env-status status-active';
+
+      // Update terminal content
+      document.getElementById('terminal-content').innerHTML = terminalContent;
+    }
+  </script>
+</body>
+
+</html>
