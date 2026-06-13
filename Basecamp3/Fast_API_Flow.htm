@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>REST API Message Flow – Client ⇄ Uvicorn ⇄ FastAPI</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020817;
+      --border: #1f2937;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-strong: #22c55e;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-subtle: #6b7280;
+      --card-radius: 14px;
+      --lane-radius: 18px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.75);
+      --transition-fast: 160ms ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px 24px 28px;
+      background: radial-gradient(circle at top, #020c1b 0%, #020617 50%, #020617 100%);
+      color: var(--text-main);
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.45rem;
+      letter-spacing: 0.03em;
+    }
+    .subtitle {
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 720px;
+    }
+    code {
+      font-size: 0.85em;
+      padding: 0.1rem 0.25rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.3fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #020b1f 0%, var(--bg-elevated) 42%, #020617 100%);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      padding: 0.9rem 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16) 0, transparent 55%);
+      mix-blend-mode: soft-light;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 0.98rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .card-header h2 span.icon {
+      font-size: 1.1rem;
+    }
+    .pill {
+      padding: 0.15rem 0.55rem;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text-subtle);
+      background: rgba(15, 23, 42, 0.95);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.45rem;
+      position: relative;
+      z-index: 1;
+    }
+    .controls-left {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
+      color: #020617;
+      font-weight: 600;
+      box-shadow: 0 10px 28px rgba(56, 189, 248, 0.5);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+    }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: none;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 32px rgba(56, 189, 248, 0.6);
+    }
+    .scenario {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+    }
+    select {
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      padding: 0.25rem 0.55rem;
+      font-size: 0.75rem;
+      outline: none;
+    }
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Lanes */
+    .lanes {
+      position: relative;
+      z-index: 1;
+      margin-top: 0.35rem;
+      border-radius: var(--lane-radius);
+      padding: 0.5rem 0.6rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background:
+        linear-gradient(to bottom right, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.9)),
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 60%);
+    }
+    .lane-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.45rem;
+      position: relative;
+    }
+    .lane {
+      position: relative;
+      padding: 0.45rem 0.35rem 0.55rem;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.95));
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      min-height: 70px;
+      overflow: hidden;
+    }
+    .lane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem;
+      margin-bottom: 0.15rem;
+    }
+    .lane-title {
+      font-size: 0.76rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .lane-title span.icon {
+      font-size: 0.9rem;
+    }
+    .lane-subtitle {
+      font-size: 0.65rem;
+      color: var(--text-subtle);
+    }
+    .lane-tag {
+      font-size: 0.62rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .lane-body {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+      margin-top: 0.2rem;
+    }
+    .lane.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 0 35px rgba(56, 189, 248, 0.25);
+    }
+    .lane.active .lane-title {
+      color: var(--accent);
+    }
+
+    /* Flow packet */
+    .packet {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      padding: 0.25rem 0.4rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #22d3ee); /* default: request */
+      color: #020617;
+      font-size: 0.68rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      box-shadow: 0 14px 30px rgba(56, 189, 248, 0.8);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: background 180ms ease-out;
+    }
+    .packet span.icon {
+      font-size: 0.8rem;
+    }
+
+    /* Timeline */
+    .timeline {
+      margin-top: 0.7rem;
+      border-radius: 12px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.98));
+      padding: 0.55rem 0.6rem;
+      max-height: 210px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .timeline-title {
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 0.3rem;
+    }
+    .timeline-step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.3rem 0.45rem;
+      padding: 0.25rem 0.3rem;
+      border-radius: 9px;
+      align-items: flex-start;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+      border: 1px solid transparent;
+    }
+    .timeline-step:hover {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(31, 41, 55, 0.9);
+      transform: translateY(-0.5px);
+    }
+    .timeline-step.active {
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+    .step-index {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+    .timeline-step.active .step-index {
+      border-color: #22c55e;
+      background: rgba(22, 163, 74, 0.12);
+      color: #bbf7d0;
+    }
+    .step-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+    }
+    .step-title {
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .step-meta {
+      font-size: 0.7rem;
+      color: var(--text-subtle);
+    }
+
+    /* Right pane: detail */
+    .detail {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 0.6rem;
+      position: relative;
+      z-index: 1;
+    }
+    .detail-top-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .detail-box {
+      border-radius: 12px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top right, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+      padding: 0.65rem 0.7rem;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 0.3rem;
+      min-height: 190px;
+    }
+    .detail-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      font-size: 0.76rem;
+    }
+    .detail-badge {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+    }
+    .detail-badge strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .status-pill {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid #16a34a;
+      background: rgba(22, 163, 74, 0.15);
+      color: #bbf7d0;
+    }
+    .status-pill.error {
+      border-color: #f97316;
+      background: rgba(248, 113, 22, 0.15);
+      color: #fed7aa;
+    }
+
+    .detail-lines {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.72rem;
+      color: var(--text-main);
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 7px;
+      padding: 0.35rem 0.45rem;
+      max-height: 140px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .detail-footnote {
+      font-size: 0.7rem;
+      color: var(--text-subtle);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 960px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>REST API Flow Simulation – Client ⇄ Uvicorn ⇄ FastAPI</h1>
+  <p class="subtitle">
+    Visualise how a single HTTP request (<code>GET /items/42</code> or <code>POST /items</code>)
+    travels from the <strong>client</strong>, through <strong>Uvicorn</strong> and
+    <strong>FastAPI</strong>, down to your <strong>endpoint code</strong> and back as a JSON response.
+  </p>
+
+  <div class="shell">
+    <!-- Left: lanes + timeline -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span class="icon">📡</span> Message flow across layers</h2>
+        <span class="pill">Conceptual simulation · No real network calls</span>
+      </div>
+
+      <div class="controls">
+        <div class="controls-left">
+          <button class="btn" id="playPauseBtn">
+            <span id="playPauseIcon">▶</span>
+            <span id="playPauseLabel">Play flow</span>
+          </button>
+          <button class="btn secondary" id="resetBtn">⟲ Reset</button>
+        </div>
+        <div class="scenario">
+          Scenario:
+          <select id="scenarioSelect">
+            <option value="getItem">GET /items/42 (read)</option>
+            <option value="createItem">POST /items (create)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Lanes -->
+      <div class="lanes" id="lanesContainer">
+        <div class="lane-grid">
+          <div class="lane" data-lane="client">
+            <div class="lane-header">
+              <div class="lane-title">
+                <span class="icon">🧑‍💻</span>
+                Client
+              </div>
+              <div class="lane-tag">Browser / Frontend</div>
+            </div>
+            <div class="lane-subtitle">Builds & sends HTTP over TCP.</div>
+            <div class="lane-body">
+              JS code (or browser) serialises request details:
+              method, URL, headers, JSON body.
+            </div>
+          </div>
+
+          <div class="lane" data-lane="network">
+            <div class="lane-header">
+              <div class="lane-title">
+                <span class="icon">🌐</span>
+                Network
+              </div>
+              <div class="lane-tag">TCP / IP</div>
+            </div>
+            <div class="lane-subtitle">Carries HTTP bytes to server.</div>
+            <div class="lane-body">
+              TCP connection to <code>host:port</code>, streams raw HTTP
+              request & response bytes.
+            </div>
+          </div>
+
+          <div class="lane" data-lane="uvicorn">
+            <div class="lane-header">
+              <div class="lane-title">
+                <span class="icon">🐧</span>
+                Uvicorn
+              </div>
+              <div class="lane-tag">ASGI server</div>
+            </div>
+            <div class="lane-subtitle">HTTP ⇄ ASGI.</div>
+            <div class="lane-body">
+              Parses HTTP request, builds ASGI <em>scope</em> +
+              <em>receive/send</em> channels and calls FastAPI.
+            </div>
+          </div>
+
+          <div class="lane" data-lane="fastapi">
+            <div class="lane-header">
+              <div class="lane-title">
+                <span class="icon">⚡</span>
+                FastAPI
+              </div>
+              <div class="lane-tag">ASGI app · Router</div>
+            </div>
+            <div class="lane-subtitle">Routing & validation.</div>
+            <div class="lane-body">
+              Matches method + path, runs dependency injection, parses JSON
+              to Pydantic models, calls endpoint.
+            </div>
+          </div>
+
+          <div class="lane" data-lane="endpoint">
+            <div class="lane-header">
+              <div class="lane-title">
+                <span class="icon">🧠</span>
+                Endpoint code
+              </div>
+              <div class="lane-tag">Your Python logic</div>
+            </div>
+            <div class="lane-subtitle">Business logic & data access.</div>
+            <div class="lane-body">
+              Executes your function, talks to DB / services, returns Python
+              dict or model; FastAPI serialises to JSON.
+            </div>
+          </div>
+
+          <!-- Flow packet (animated) -->
+          <div class="packet" id="packet">
+            <span class="icon" id="packetIcon">➡️</span>
+            <span id="packetLabel">HTTP Request</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline" id="timeline">
+        <div class="timeline-title">Step-by-step message exchange</div>
+        <!-- Steps dynamically rendered -->
+      </div>
+    </div>
+
+    <!-- Right: detailed view -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span class="icon">🧾</span> Current message snapshot</h2>
+        <span class="pill">Zoom into headers, payload & behaviour</span>
+      </div>
+
+      <div class="detail">
+        <div class="detail-top-text">
+          Follow a single logical request as it flows through each layer.
+          The content below updates with the currently highlighted step in
+          the timeline on the left.
+        </div>
+
+        <div class="detail-box">
+          <div class="detail-header-row">
+            <div class="detail-badge" id="detailContext">
+              Layer: <strong>Client</strong> · Direction: <span>Outbound</span>
+            </div>
+            <div class="status-pill" id="detailStatus">No response yet</div>
+          </div>
+
+          <div class="detail-lines" id="detailLines">
+            Select "Play flow" to start the simulation.
+          </div>
+
+          <div class="detail-footnote" id="detailFootnote">
+            At each hop, the <strong>payload</strong> is conceptually the same
+            (method, URL, headers, body), but the representation changes:
+            browser objects → HTTP bytes → ASGI scope → Python arguments → JSON response.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Scenario definitions -----------------------------------------
+    const scenarios = {
+      getItem: {
+        label: "GET /items/42 (read)",
+        method: "GET",
+        path: "/items/42",
+        body: null,
+        steps: [
+          {
+            id: 1,
+            lane: "client",
+            direction: "outbound",
+            phase: "request",
+            title: "Client builds HTTP request",
+            meta: "Browser / frontend constructs GET /items/42",
+            packetLabel: "HTTP Request",
+            detailLines: () => [
+              "JavaScript (or the browser) prepares:",
+              "",
+              "  method:  GET",
+              "  url:     https://api.example.com/items/42",
+              "  headers:",
+              "    Accept: application/json",
+              "    Authorization: Bearer <token>",
+              "",
+              "No body is sent for this GET request."
+            ].join("\n"),
+            footnote:
+              "On the client side, everything is still high-level objects in memory. " +
+              "Nothing has been turned into raw bytes yet."
+          },
+          {
+            id: 2,
+            lane: "network",
+            direction: "outbound",
+            phase: "request",
+            title: "HTTP over TCP to server",
+            meta: "Request is serialised into bytes and sent to host:port",
+            packetLabel: "TCP stream (HTTP)",
+            detailLines: () => [
+              "The browser opens (or reuses) a TCP connection to api.example.com:443 and sends:",
+              "",
+              "  GET /items/42 HTTP/1.1",
+              "  Host: api.example.com",
+              "  Accept: application/json",
+              "  Authorization: Bearer <token>",
+              "",
+              "The server receives these bytes at the socket level."
+            ].join("\n"),
+            footnote:
+              "At this point, neither Uvicorn nor FastAPI is visible yet. " +
+              "This is still pure HTTP transported over TCP."
+          },
+          {
+            id: 3,
+            lane: "uvicorn",
+            direction: "inbound",
+            phase: "request",
+            title: "Uvicorn parses HTTP request",
+            meta: "ASGI server parses bytes into HTTP structures",
+            packetLabel: "ASGI scope",
+            detailLines: () => [
+              "Uvicorn reads the HTTP bytes and parses them into:",
+              "",
+              "  scope = {",
+              "    'type': 'http',",
+              "    'method': 'GET',",
+              "    'path': '/items/42',",
+              "    'headers': [...],",
+              "    'client': ('1.2.3.4', 54321),",
+              "    'server': ('0.0.0.0', 8000),",
+              "  }",
+              "",
+              "Then it calls the FastAPI app(scope, receive, send)."
+            ].join("\n"),
+            footnote:
+              "ASGI defines a standard interface between servers (Uvicorn) and applications (FastAPI). " +
+              "FastAPI never sees raw TCP or raw HTTP bytes."
+          },
+          {
+            id: 4,
+            lane: "fastapi",
+            direction: "inbound",
+            phase: "request",
+            title: "FastAPI routes & validates",
+            meta: "Router matches GET /items/{item_id}",
+            packetLabel: "Matched route",
+            detailLines: () => [
+              "FastAPI receives the ASGI call and:",
+              "",
+              "  1. Matches method + path:",
+              "       GET /items/42  →  @app.get('/items/{item_id}')",
+              "",
+              "  2. Extracts path parameters:",
+              "       item_id = 42",
+              "",
+              "  3. Prepares dependencies & type validation.",
+              "",
+              "Then it calls your endpoint function with item_id=42."
+            ].join("\n"),
+            footnote:
+              "Here is where Python function arguments are wired up: path, query, headers, " +
+              "and body (if any) become strongly-typed parameters."
+          },
+          {
+            id: 5,
+            lane: "endpoint",
+            direction: "inbound",
+            phase: "request",
+            title: "Endpoint executes business logic",
+            meta: "Your code runs, may access DB/services",
+            packetLabel: "Python dict result",
+            detailLines: () => [
+              "Your FastAPI endpoint executes, e.g.:",
+              "",
+              "  @app.get('/items/{item_id}')",
+              "  async def read_item(item_id: int):",
+              "      item = await db.get_item(item_id)",
+              "      return {",
+              "          'id': item_id,",
+              "          'name': item.name,",
+              "          'price': item.price",
+              "      }",
+              "",
+              "FastAPI takes this Python dict as the logical response body."
+            ].join("\n"),
+            footnote:
+              "At this layer you work with normal Python objects. " +
+              "FastAPI will later serialise them to JSON."
+          },
+          {
+            id: 6,
+            lane: "fastapi",
+            direction: "outbound",
+            phase: "response",
+            title: "FastAPI builds Response object",
+            meta: "Serialises to JSON, sets status & headers",
+            packetLabel: "JSON response",
+            detailLines: () => [
+              "FastAPI converts the dict into a Response:",
+              "",
+              "  status_code = 200",
+              "  headers = {",
+              "      'content-type': 'application/json',",
+              "  }",
+              "  body = b'{\"id\": 42, \"name\": \"Item 42\", \"price\": 9.99}'",
+              "",
+              "It then uses the ASGI 'send' channel to instruct Uvicorn to send this back."
+            ].join("\n"),
+            footnote:
+              "Serialisation, validation and OpenAPI documentation are handled here. " +
+              "Uvicorn just sees bytes + status to push back over HTTP."
+          },
+          {
+            id: 7,
+            lane: "uvicorn",
+            direction: "outbound",
+            phase: "response",
+            title: "Uvicorn writes HTTP response",
+            meta: "Formats HTTP/1.1 response over the socket",
+            packetLabel: "HTTP/1.1 200 OK",
+            detailLines: () => [
+              "Uvicorn receives the ASGI response and writes:",
+              "",
+              "  HTTP/1.1 200 OK",
+              "  content-type: application/json",
+              "",
+              "  {\"id\": 42, \"name\": \"Item 42\", \"price\": 9.99}",
+              "",
+              "These bytes go out over the established TCP connection."
+            ].join("\n"),
+            footnote:
+              "Uvicorn is responsible for speaking the HTTP protocol correctly " +
+              "to the client on the other end of the TCP connection."
+          },
+          {
+            id: 8,
+            lane: "network",
+            direction: "inbound",
+            phase: "response",
+            title: "Response travels back over network",
+            meta: "TCP carries bytes back to client",
+            packetLabel: "TCP stream (HTTP)",
+            detailLines: () => [
+              "The response bytes are transported back over the same TCP connection:",
+              "",
+              "  HTTP/1.1 200 OK",
+              "  content-type: application/json",
+              "",
+              "  {\"id\": 42, \"name\": \"Item 42\", \"price\": 9.99}",
+              "",
+              "The browser receives this as a raw HTTP response."
+            ].join("\n"),
+            footnote:
+              "No application logic happens here – the network just moves bytes."
+          },
+          {
+            id: 9,
+            lane: "client",
+            direction: "inbound",
+            phase: "response",
+            title: "Client parses response & updates UI",
+            meta: "Browser / frontend code consumes JSON",
+            packetLabel: "Parsed JSON",
+            detailLines: () => [
+              "The browser hands the body to your JS code, e.g.:",
+              "",
+              "  const res = await fetch('/items/42');",
+              "  const data = await res.json();",
+              "",
+              "Now data = { id: 42, name: 'Item 42', price: 9.99 }",
+              "",
+              "Your UI updates using this structured data."
+            ].join("\n"),
+            footnote:
+              "From the client's point of view, everything collapsed back " +
+              "into a simple JSON object, hiding the entire server-side stack."
+          }
+        ]
+      },
+      createItem: {
+        label: "POST /items (create)",
+        method: "POST",
+        path: "/items",
+        body: '{"name": "Fancy Pen", "price": 9.99}',
+        steps: [
+          {
+            id: 1,
+            lane: "client",
+            direction: "outbound",
+            phase: "request",
+            title: "Client prepares JSON body",
+            meta: "POST /items with JSON payload",
+            packetLabel: "HTTP Request + JSON",
+            detailLines: () => [
+              "The frontend prepares:",
+              "",
+              "  method: POST",
+              "  url:    https://api.example.com/items",
+              "  body:   { name: 'Fancy Pen', price: 9.99 }",
+              "",
+              "Headers:",
+              "  Content-Type: application/json",
+              "  Accept: application/json"
+            ].join("\n"),
+            footnote:
+              "Notice the Content-Type header: this tells FastAPI to parse the body as JSON."
+          },
+          {
+            id: 2,
+            lane: "network",
+            direction: "outbound",
+            phase: "request",
+            title: "JSON payload sent over TCP",
+            meta: "HTTP/1.1 POST with body",
+            packetLabel: "TCP stream (HTTP + JSON)",
+            detailLines: () => [
+              "Bytes on the wire:",
+              "",
+              "  POST /items HTTP/1.1",
+              "  Host: api.example.com",
+              "  Content-Type: application/json",
+              "",
+              "  {\"name\":\"Fancy Pen\",\"price\":9.99}"
+            ].join("\n"),
+            footnote:
+              "Body is just bytes from the network's perspective, regardless of being JSON."
+          },
+          {
+            id: 3,
+            lane: "uvicorn",
+            direction: "inbound",
+            phase: "request",
+            title: "Uvicorn exposes body stream to FastAPI",
+            meta: "ASGI scope + body via receive()",
+            packetLabel: "ASGI scope + body",
+            detailLines: () => [
+              "Uvicorn parses the HTTP and builds:",
+              "",
+              "  scope = { 'type': 'http', 'method': 'POST', 'path': '/items', ... }",
+              "",
+              "Body is delivered to FastAPI via ASGI receive() calls."
+            ].join("\n"),
+            footnote:
+              "FastAPI reads the body from the ASGI receive channel; Uvicorn doesn't interpret JSON."
+          },
+          {
+            id: 4,
+            lane: "fastapi",
+            direction: "inbound",
+            phase: "request",
+            title: "FastAPI validates request model",
+            meta: "Pydantic model for ItemCreate",
+            packetLabel: "Python model",
+            detailLines: () => [
+              "FastAPI finds @app.post('/items') and parses JSON into a Pydantic model:",
+              "",
+              "  class ItemCreate(BaseModel):",
+              "      name: str",
+              "      price: float",
+              "",
+              "Invalid JSON or invalid types would become a 422 error automatically."
+            ].join("\n"),
+            footnote:
+              "This is where schema validation and automatic error responses happen."
+          },
+          {
+            id: 5,
+            lane: "endpoint",
+            direction: "inbound",
+            phase: "request",
+            title: "Endpoint creates new item",
+            meta: "Inserts into DB and returns representation",
+            packetLabel: "Created entity",
+            detailLines: () => [
+              "Your endpoint might look like:",
+              "",
+              "  @app.post('/items', status_code=201)",
+              "  async def create_item(payload: ItemCreate):",
+              "      item_id = await db.insert(payload)",
+              "      return { 'id': item_id, **payload.dict() }"
+            ].join("\n"),
+            footnote:
+              "Business logic is decoupled from transport concerns. " +
+              "The endpoint simply returns Python structures."
+          },
+          {
+            id: 6,
+            lane: "fastapi",
+            direction: "outbound",
+            phase: "response",
+            title: "FastAPI builds 201 Created response",
+            meta: "Sets Location header and JSON body",
+            packetLabel: "HTTP 201 + JSON",
+            detailLines: () => [
+              "FastAPI builds Response:",
+              "",
+              "  status_code = 201",
+              "  body = { 'id': 101, 'name': 'Fancy Pen', 'price': 9.99 }",
+              "  headers may include:",
+              "    Location: /items/101"
+            ].join("\n"),
+            footnote:
+              "The HTTP semantics (201 vs 200, Location header) are encoded at this stage."
+          },
+          {
+            id: 7,
+            lane: "uvicorn",
+            direction: "outbound",
+            phase: "response",
+            title: "Uvicorn writes HTTP/1.1 201 Created",
+            meta: "Response serialized to HTTP wire format",
+            packetLabel: "HTTP/1.1 201 Created",
+            detailLines: () => [
+              "Uvicorn writes to the socket:",
+              "",
+              "  HTTP/1.1 201 Created",
+              "  content-type: application/json",
+              "  location: /items/101",
+              "",
+              "  {\"id\":101,\"name\":\"Fancy Pen\",\"price\":9.99}"
+            ].join("\n"),
+            footnote:
+              "From FastAPI's point of view, it has already finished once it sends the ASGI messages."
+          },
+          {
+            id: 8,
+            lane: "network",
+            direction: "inbound",
+            phase: "response",
+            title: "Response travels back to client",
+            meta: "Same TCP connection, opposite direction",
+            packetLabel: "TCP stream (response)",
+            detailLines: () => [
+              "The response bytes move over the network back to the browser.",
+              "",
+              "Any intermediate proxies/load balancers might add or strip headers, " +
+              "but the basic HTTP structure remains the same."
+            ].join("\n"),
+            footnote:
+              "This step looks almost identical to the GET scenario, just with different status/body."
+          },
+          {
+            id: 9,
+            lane: "client",
+            direction: "inbound",
+            phase: "response",
+            title: "Client acknowledges new item",
+            meta: "Front-end updates view with new item",
+            packetLabel: "Parsed JSON",
+            detailLines: () => [
+              "Example JavaScript:",
+              "",
+              "  const res = await fetch('/items', { method: 'POST', body: JSON.stringify({...}) });",
+              "  const created = await res.json();",
+              "",
+              "created.id    // 101",
+              "created.name  // 'Fancy Pen'",
+              "",
+              "UI now reflects the newly created item."
+            ].join("\n"),
+            footnote:
+              "The end user only sees that 'a new item appeared'; " +
+              "all HTTP / ASGI machinery remains invisible."
+          }
+        ]
+      }
+    };
+
+    // DOM references
+    const lanes = document.querySelectorAll(".lane");
+    const packetEl = document.getElementById("packet");
+    const packetLabelEl = document.getElementById("packetLabel");
+    const packetIconEl = document.getElementById("packetIcon");
+    const timelineEl = document.getElementById("timeline");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const playPauseIcon = document.getElementById("playPauseIcon");
+    const playPauseLabel = document.getElementById("playPauseLabel");
+    const resetBtn = document.getElementById("resetBtn");
+    const scenarioSelect = document.getElementById("scenarioSelect");
+
+    const detailContext = document.getElementById("detailContext");
+    const detailStatus = document.getElementById("detailStatus");
+    const detailLines = document.getElementById("detailLines");
+    const detailFootnote = document.getElementById("detailFootnote");
+
+    // State
+    let currentScenarioKey = "getItem";
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let timerId = null;
+    const STEP_DURATION = 2200; // slowed down
+
+    function getCurrentScenario() {
+      return scenarios[currentScenarioKey];
+    }
+
+    // --- Rendering helpers --------------------------------------------
+    function renderTimeline() {
+      const scenario = getCurrentScenario();
+
+      // Remove existing steps (except title)
+      const existingSteps = timelineEl.querySelectorAll(".timeline-step");
+      existingSteps.forEach((n) => n.remove());
+
+      scenario.steps.forEach((step, index) => {
+        const stepEl = document.createElement("div");
+        stepEl.className = "timeline-step";
+        stepEl.dataset.index = index;
+
+        const idxEl = document.createElement("div");
+        idxEl.className = "step-index";
+        idxEl.textContent = index + 1;
+
+        const mainEl = document.createElement("div");
+        mainEl.className = "step-main";
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "step-title";
+        titleEl.textContent = step.title;
+
+        const metaEl = document.createElement("div");
+        metaEl.className = "step-meta";
+        metaEl.textContent = step.meta;
+
+        mainEl.appendChild(titleEl);
+        mainEl.appendChild(metaEl);
+
+        stepEl.appendChild(idxEl);
+        stepEl.appendChild(mainEl);
+
+        stepEl.addEventListener("click", () => {
+          stopPlaying();
+          gotoStep(index);
+        });
+
+        timelineEl.appendChild(stepEl);
+      });
+
+      highlightTimelineStep();
+    }
+
+    function highlightTimelineStep() {
+      const scenario = getCurrentScenario();
+      const steps = timelineEl.querySelectorAll(".timeline-step");
+      steps.forEach((s, i) => {
+        s.classList.toggle("active", i === currentStepIndex);
+      });
+
+      const active = steps[currentStepIndex];
+      if (active) {
+        const rect = active.getBoundingClientRect();
+        const parentRect = timelineEl.getBoundingClientRect();
+        if (rect.top < parentRect.top || rect.bottom > parentRect.bottom) {
+          active.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+
+      const step = scenario.steps[currentStepIndex];
+      if (!step) return;
+
+      // Lane highlight
+      lanes.forEach((lane) => {
+        lane.classList.toggle("active", lane.dataset.lane === step.lane);
+      });
+
+      // Packet positioning
+      const laneEl = Array.from(lanes).find((l) => l.dataset.lane === step.lane);
+      if (laneEl) {
+        const laneRect = laneEl.getBoundingClientRect();
+        const containerRect = document.getElementById("lanesContainer").getBoundingClientRect();
+
+        const centerY = laneRect.top + laneRect.height / 2 - containerRect.top;
+        const laneLeft = laneRect.left - containerRect.left;
+        const laneRight = laneLeft + laneRect.width;
+
+        const x = step.direction === "outbound"
+          ? laneLeft + laneRect.width * 0.15
+          : laneRight - laneRect.width * 0.15;
+
+        packetEl.style.top = centerY + "px";
+        packetEl.style.left = x + "px";
+        packetEl.style.opacity = 1;
+        packetLabelEl.textContent = step.packetLabel;
+
+        // Differentiate request vs response visually
+        const phase = step.phase || "request";
+        if (phase === "response") {
+          packetIconEl.textContent = "⬅️"; // right-to-left arrow for response
+          packetEl.style.background = "linear-gradient(135deg, #38bdf8, #6366f1)";
+        } else {
+          packetIconEl.textContent = "➡️"; // left-to-right arrow for request
+          packetEl.style.background = "linear-gradient(135deg, #22c55e, #22d3ee)";
+        }
+      }
+
+      // Detail pane
+      const dirLabel = step.direction === "outbound" ? "Outbound" : "Inbound";
+      detailContext.innerHTML = `Layer: <strong>${capitalize(step.lane)}</strong> · Direction: <span>${dirLabel}</span>`;
+      detailLines.textContent = typeof step.detailLines === "function" ? step.detailLines() : (step.detailLines || "");
+      detailFootnote.textContent = step.footnote || "";
+
+      // Status pill
+      const totalSteps = scenario.steps.length;
+      if (currentStepIndex < totalSteps - 2) {
+        detailStatus.textContent = "Processing request";
+        detailStatus.classList.remove("error");
+      } else if (currentStepIndex === totalSteps - 2) {
+        detailStatus.textContent = "Response on the wire";
+        detailStatus.classList.remove("error");
+      } else {
+        const statusText = currentScenarioKey === "getItem" ? "200 OK · Success" : "201 Created · Success";
+        detailStatus.textContent = statusText;
+        detailStatus.classList.remove("error");
+      }
+    }
+
+    function capitalize(s) {
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    // --- Playback logic -----------------------------------------------
+    function gotoStep(index) {
+      const scenario = getCurrentScenario();
+      if (index < 0 || index >= scenario.steps.length) return;
+      currentStepIndex = index;
+      highlightTimelineStep();
+    }
+
+    function nextStep() {
+      const scenario = getCurrentScenario();
+      if (currentStepIndex < scenario.steps.length - 1) {
+        currentStepIndex += 1;
+        highlightTimelineStep();
+        return true;
+      }
+      return false;
+    }
+
+    function startPlaying() {
+      if (isPlaying) return;
+      isPlaying = true;
+      playPauseIcon.textContent = "⏸";
+      playPauseLabel.textContent = "Pause";
+      scheduleNext();
+    }
+
+    function scheduleNext() {
+      if (!isPlaying) return;
+      timerId = setTimeout(() => {
+        if (!nextStep()) {
+          stopPlaying();
+        } else {
+          scheduleNext();
+        }
+      }, STEP_DURATION);
+    }
+
+    function stopPlaying() {
+      isPlaying = false;
+      playPauseIcon.textContent = "▶";
+      playPauseLabel.textContent = "Play flow";
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+    }
+
+    function reset() {
+      stopPlaying();
+      currentStepIndex = 0;
+      highlightTimelineStep();
+    }
+
+    // --- Event wiring -------------------------------------------------
+    playPauseBtn.addEventListener("click", () => {
+      if (isPlaying) {
+        stopPlaying();
+      } else {
+        startPlaying();
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      reset();
+    });
+
+    scenarioSelect.addEventListener("change", (e) => {
+      currentScenarioKey = e.target.value;
+      currentStepIndex = 0;
+      renderTimeline();
+      highlightTimelineStep();
+    });
+
+    // --- Initial render -----------------------------------------------
+    renderTimeline();
+    highlightTimelineStep();
+  </script>
+</body>
+</html>

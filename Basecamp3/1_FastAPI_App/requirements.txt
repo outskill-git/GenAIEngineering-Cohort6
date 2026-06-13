@@ -1,0 +1,4 @@
+pandas
+fastapi
+uvicorn
+pydantic[email]

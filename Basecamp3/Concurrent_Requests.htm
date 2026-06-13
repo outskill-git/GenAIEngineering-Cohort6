@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Uvicorn Server & Parallel Requests</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020817;
+      --border: #1f2937;
+      --accent: #38bdf8;
+      --accent-strong: #22c55e;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-subtle: #6b7280;
+      --card-radius: 14px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px 24px 28px;
+      background: radial-gradient(circle at top, #020c1b 0%, #020617 50%, #020617 100%);
+      color: var(--text-main);
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.45rem;
+      letter-spacing: 0.03em;
+    }
+    .subtitle {
+      margin: 0 0 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 760px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #020b1f 0%, var(--bg-elevated) 42%, #020617 100%);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-soft);
+      padding: 0.9rem 1rem 1.1rem;
+      position: relative;
+      overflow: hidden;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 0.98rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .card-header h2 span.icon {
+      font-size: 1.1rem;
+    }
+    .pill {
+      padding: 0.15rem 0.55rem;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--text-subtle);
+      background: rgba(15, 23, 42, 0.95);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
+      color: #020617;
+      font-weight: 600;
+      box-shadow: 0 10px 28px rgba(56, 189, 248, 0.5);
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, opacity 0.15s ease-out;
+    }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: none;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 32px rgba(56, 189, 248, 0.6);
+    }
+    .hint-text {
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+    }
+
+    .summary {
+      margin-top: 0.3rem;
+      padding: 0.4rem 0.55rem;
+      border-radius: 0.7rem;
+      border: 1px solid rgba(51, 65, 85, 0.95);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .summary-left {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .uv-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #4b5563;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+    .summary-count {
+      font-weight: 600;
+      color: #bbf7d0;
+    }
+    .summary-text {
+      color: var(--text-subtle);
+    }
+
+    /* Grid header showing shared columns */
+    .diagram {
+      margin-top: 0.7rem;
+      border-radius: 12px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: linear-gradient(to bottom right, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.98));
+      padding: 0.4rem 0.6rem 0.7rem;
+    }
+
+    .grid-header {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 1.1fr 1.4fr;
+      gap: 0.4rem;
+      margin-bottom: 0.35rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-subtle);
+    }
+    .grid-header div {
+      padding: 0.2rem 0.35rem;
+      border-radius: 999px;
+      text-align: center;
+      border: 1px dashed rgba(55, 65, 81, 0.9);
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
+    }
+    .grid-header .shared-uv {
+      border-color: #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+      color: #e0f2fe;
+    }
+    .grid-header .shared-fa {
+      border-color: #22c55e;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.4);
+      color: #bbf7d0;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 1.1fr 1.4fr;
+      gap: 0.4rem;
+      align-items: center;
+      padding: 0.25rem 0.25rem;
+      border-radius: 9px;
+      margin-bottom: 0.25rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .lane:nth-child(even) {
+      background: rgba(2, 6, 23, 0.85);
+    }
+    .lane.active {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    }
+
+    .lane-client {
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+    }
+    .lane-client-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .lane-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+    }
+    .lane-name {
+      font-weight: 500;
+      font-size: 0.78rem;
+    }
+    .lane-meta {
+      font-size: 0.7rem;
+      color: var(--text-subtle);
+    }
+
+    .lane-track {
+      grid-column: 1 / span 3; /* client + uvicorn + fastapi columns */
+      position: relative;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px dashed rgba(55, 65, 81, 0.9);
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0.5rem;
+    }
+
+    .node-anchor {
+      position: relative;
+      flex: 1;
+      text-align: center;
+      font-size: 0.68rem;
+      color: var(--text-subtle);
+    }
+
+    .node-pill {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.05rem;
+      padding: 0.08rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 65, 85, 0.95);
+      background: rgba(15, 23, 42, 0.97);
+      font-size: 0.68rem;
+    }
+    .node-pill strong {
+      font-size: 0.7rem;
+      color: var(--text-main);
+    }
+    .node-pill span {
+      font-size: 0.62rem;
+      color: var(--text-subtle);
+    }
+
+    .lane-endpoint {
+      font-size: 0.72rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.12rem;
+      padding-left: 0.2rem;
+    }
+    .lane-endpoint-title {
+      font-weight: 500;
+    }
+    .lane-endpoint-meta {
+      color: var(--text-subtle);
+      font-size: 0.68rem;
+    }
+
+    .status-chip {
+      position: absolute;
+      right: 0.35rem;
+      bottom: 0.3rem;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text-subtle);
+    }
+    .status-chip.active {
+      border-color: #22c55e;
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.2);
+    }
+    .status-chip.done {
+      border-color: #38bdf8;
+      color: #e0f2fe;
+      background: rgba(56, 189, 248, 0.2);
+    }
+
+    .packet {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 150px;
+      padding: 0.18rem 0.5rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #22d3ee);
+      color: #020617;
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      box-shadow: 0 10px 26px rgba(56, 189, 248, 0.9);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: left 1.2s ease-out, background 0.2s ease-out, opacity 0.2s ease-out;
+      z-index: 5;
+    }
+    .packet .icon {
+      font-size: 0.85rem;
+    }
+
+    .log {
+      margin-top: 0.7rem;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: rgba(2, 6, 23, 0.98);
+      padding: 0.5rem 0.55rem;
+      font-size: 0.74rem;
+      color: var(--text-subtle);
+    }
+    .log-title {
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 0.35rem;
+    }
+    .log-body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 7px;
+      padding: 0.35rem 0.45rem;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      color: var(--text-main);
+    }
+    .log-body .dim {
+      color: var(--text-subtle);
+    }
+
+    @media (max-width: 900px) {
+      .card {
+        padding: 0.8rem 0.7rem 1rem;
+      }
+      .diagram {
+        padding-inline: 0.35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Uvicorn + FastAPI – Shared Server, Parallel Requests</h1>
+  <p class="subtitle">
+    One <strong>Uvicorn</strong> server and one <strong>FastAPI</strong> app,
+    handling multiple clients in parallel. Each lane is a separate client.
+  </p>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="icon">📡</span> Parallel Requests to Uvicorn + FastAPI</h2>
+      <span class="pill">Conceptual · No real network calls</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn">▶ Play parallel flow</button>
+      <button class="btn secondary" id="resetBtn">⟲ Reset</button>
+      <div class="hint-text">Green → requests (L→R), blue → responses (R→L).</div>
+    </div>
+
+    <div class="summary">
+      <div class="summary-left">
+        <span class="uv-dot" id="uvDot"></span>
+        <span>Requests currently inside Uvicorn / FastAPI:</span>
+        <span class="summary-count" id="uvCount">0</span>
+      </div>
+      <div class="summary-text" id="uvHint">
+        Idle – nothing in the shared server stack.
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="grid-header">
+        <div>Client</div>
+        <div class="shared-uv">Uvicorn (shared)</div>
+        <div class="shared-fa">FastAPI (shared)</div>
+        <div>Endpoint</div>
+      </div>
+
+      <!-- Lanes -->
+      <div class="lane" data-lane="0">
+        <div class="lane-client">
+          <div class="lane-client-main">
+            <div class="lane-avatar">A</div>
+            <div class="lane-name">Client A</div>
+          </div>
+          <div class="lane-meta">Browser · GET /items/42</div>
+        </div>
+        <div class="lane-track">
+          <div class="node-anchor node-client">
+            <div class="node-pill">
+              <strong>Client</strong>
+              <span>Browser</span>
+            </div>
+          </div>
+          <div class="node-anchor node-uvicorn">
+            <div class="node-pill">
+              <strong>Uvicorn</strong>
+              <span>ASGI server</span>
+            </div>
+          </div>
+          <div class="node-anchor node-fastapi">
+            <div class="node-pill">
+              <strong>FastAPI</strong>
+              <span>App</span>
+            </div>
+          </div>
+          <div class="packet" id="packet-0">
+            <span class="icon" id="packet-icon-0">➡️</span>
+            <span id="packet-label-0">GET /items/42</span>
+          </div>
+        </div>
+        <div class="lane-endpoint">
+          <div class="lane-endpoint-title">/items/{id}</div>
+          <div class="lane-endpoint-meta">Items API endpoint</div>
+        </div>
+        <div class="status-chip" id="status-0">Idle</div>
+      </div>
+
+      <div class="lane" data-lane="1">
+        <div class="lane-client">
+          <div class="lane-client-main">
+            <div class="lane-avatar">B</div>
+            <div class="lane-name">Client B</div>
+          </div>
+          <div class="lane-meta">Mobile · POST /items</div>
+        </div>
+        <div class="lane-track">
+          <div class="node-anchor node-client">
+            <div class="node-pill">
+              <strong>Client</strong>
+              <span>Mobile</span>
+            </div>
+          </div>
+          <div class="node-anchor node-uvicorn">
+            <div class="node-pill">
+              <strong>Uvicorn</strong>
+              <span>ASGI server</span>
+            </div>
+          </div>
+          <div class="node-anchor node-fastapi">
+            <div class="node-pill">
+              <strong>FastAPI</strong>
+              <span>App</span>
+            </div>
+          </div>
+          <div class="packet" id="packet-1">
+            <span class="icon" id="packet-icon-1">➡️</span>
+            <span id="packet-label-1">POST /items</span>
+          </div>
+        </div>
+        <div class="lane-endpoint">
+          <div class="lane-endpoint-title">/items</div>
+          <div class="lane-endpoint-meta">Create item</div>
+        </div>
+        <div class="status-chip" id="status-1">Idle</div>
+      </div>
+
+      <div class="lane" data-lane="2">
+        <div class="lane-client">
+          <div class="lane-client-main">
+            <div class="lane-avatar">C</div>
+            <div class="lane-name">Client C</div>
+          </div>
+          <div class="lane-meta">Service · GET /health</div>
+        </div>
+        <div class="lane-track">
+          <div class="node-anchor node-client">
+            <div class="node-pill">
+              <strong>Client</strong>
+              <span>Service</span>
+            </div>
+          </div>
+          <div class="node-anchor node-uvicorn">
+            <div class="node-pill">
+              <strong>Uvicorn</strong>
+              <span>ASGI server</span>
+            </div>
+          </div>
+          <div class="node-anchor node-fastapi">
+            <div class="node-pill">
+              <strong>FastAPI</strong>
+              <span>App</span>
+            </div>
+          </div>
+          <div class="packet" id="packet-2">
+            <span class="icon" id="packet-icon-2">➡️</span>
+            <span id="packet-label-2">GET /health</span>
+          </div>
+        </div>
+        <div class="lane-endpoint">
+          <div class="lane-endpoint-title">/health</div>
+          <div class="lane-endpoint-meta">Health check</div>
+        </div>
+        <div class="status-chip" id="status-2">Idle</div>
+      </div>
+    </div>
+
+    <div class="log">
+      <div class="log-title">Live sequence</div>
+      <div class="log-body" id="logBody">
+        <span class="dim">Press “Play parallel flow” to see events here.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const lanes = [
+      { id: 0, label: "Client A · GET /items/42" },
+      { id: 1, label: "Client B · POST /items" },
+      { id: 2, label: "Client C · GET /health" },
+    ];
+
+    const STAGES = [
+      { name: "client-outbound", node: "client", phase: "request" },
+      { name: "uvicorn-inbound", node: "uvicorn", phase: "request" },
+      { name: "fastapi-inbound", node: "fastapi", phase: "request" },
+      { name: "endpoint-processing", node: "endpoint", phase: "request" },
+      { name: "fastapi-outbound", node: "fastapi", phase: "response" },
+      { name: "uvicorn-outbound", node: "uvicorn", phase: "response" },
+      { name: "client-response", node: "client", phase: "response" },
+    ];
+
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const uvDot = document.getElementById("uvDot");
+    const uvCount = document.getElementById("uvCount");
+    const uvHint = document.getElementById("uvHint");
+    const logBody = document.getElementById("logBody");
+
+    let activeTimeouts = [];
+    let running = false;
+    let laneState = lanes.map(() => ({ stageIndex: -1, active: false }));
+
+    function getPositions(laneIndex) {
+      const laneEl = document.querySelector(`.lane[data-lane="${laneIndex}"]`);
+      const trackEl = laneEl.querySelector(".lane-track");
+      const endpointEl = laneEl.querySelector(".lane-endpoint-title");
+
+      const rectTrack = trackEl.getBoundingClientRect();
+      const nodeClient = trackEl.querySelector(".node-client .node-pill").getBoundingClientRect();
+      const nodeUv = trackEl.querySelector(".node-uvicorn .node-pill").getBoundingClientRect();
+      const nodeFa = trackEl.querySelector(".node-fastapi .node-pill").getBoundingClientRect();
+      const rectEndpoint = endpointEl.getBoundingClientRect();
+
+      const centerX = (rect) => rect.left + rect.width / 2 - rectTrack.left;
+
+      return {
+        client: centerX(nodeClient),
+        uvicorn: centerX(nodeUv),
+        fastapi: centerX(nodeFa),
+        endpoint: centerX(rectEndpoint) + (rectTrack.right - rectTrack.left) * 0.3, // push a bit right visually
+      };
+    }
+
+    function schedule(fn, delay) {
+      const id = setTimeout(fn, delay);
+      activeTimeouts.push(id);
+    }
+
+    function clearAllTimeouts() {
+      activeTimeouts.forEach(clearTimeout);
+      activeTimeouts = [];
+    }
+
+    function updateSummary() {
+      const activeInside = laneState.filter(s => s.stageIndex >= 1 && s.stageIndex <= 5 && s.active).length;
+      uvCount.textContent = String(activeInside);
+      if (activeInside === 0) {
+        uvHint.textContent = "Idle – nothing in the shared server stack.";
+        uvDot.style.background = "#4b5563";
+        uvDot.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+      } else if (activeInside === 1) {
+        uvHint.textContent = "One request crossing Uvicorn + FastAPI.";
+        uvDot.style.background = "#22c55e";
+        uvDot.style.boxShadow = "0 0 12px rgba(34, 197, 94, 0.9)";
+      } else {
+        uvHint.textContent = `${activeInside} requests in flight through the shared stack.`;
+        uvDot.style.background = "#22c55e";
+        uvDot.style.boxShadow = "0 0 18px rgba(34, 197, 94, 0.95)";
+      }
+    }
+
+    function setPacket(laneId, phase, left) {
+      const packet = document.getElementById(`packet-${laneId}`);
+      const icon = document.getElementById(`packet-icon-${laneId}`);
+      if (!packet) return;
+      packet.style.left = `${left}px`;
+      packet.style.opacity = "1";
+      if (phase === "response") {
+        packet.style.background = "linear-gradient(135deg, #38bdf8, #6366f1)";
+        icon.textContent = "⬅️";
+      } else {
+        packet.style.background = "linear-gradient(135deg, #22c55e, #22d3ee)";
+        icon.textContent = "➡️";
+      }
+    }
+
+    function setStatus(laneId, text, state) {
+      const chip = document.getElementById(`status-${laneId}`);
+      const laneEl = document.querySelector(`.lane[data-lane="${laneId}"]`);
+      if (!chip || !laneEl) return;
+      chip.textContent = text;
+      chip.classList.remove("active", "done");
+      laneEl.classList.remove("active");
+      if (state === "active") {
+        chip.classList.add("active");
+        laneEl.classList.add("active");
+      } else if (state === "done") {
+        chip.classList.add("done");
+      }
+    }
+
+    function hidePacket(laneId) {
+      const packet = document.getElementById(`packet-${laneId}`);
+      if (packet) packet.style.opacity = "0";
+    }
+
+    function logEvent(laneId, stage) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const ss = String(now.getSeconds()).padStart(2, "0");
+      const t = `${hh}:${mm}:${ss}`;
+      const laneLabel = lanes[laneId].label;
+      let text = "";
+
+      switch (stage.name) {
+        case "client-outbound":
+          text = "sending request → Uvicorn";
+          break;
+        case "uvicorn-inbound":
+          text = "Uvicorn: parse HTTP, build ASGI scope";
+          break;
+        case "fastapi-inbound":
+          text = "FastAPI: route + select endpoint";
+          break;
+        case "endpoint-processing":
+          text = "endpoint logic / DB work";
+          break;
+        case "fastapi-outbound":
+          text = "FastAPI builds JSON response";
+          break;
+        case "uvicorn-outbound":
+          text = "Uvicorn sends HTTP response";
+          break;
+        case "client-response":
+          text = "client received response";
+          break;
+        default:
+          text = "in flight";
+      }
+
+      const line = `[${t}] ${laneLabel}: ${text}`;
+      if (logBody.textContent.includes("Press “Play parallel flow”")) {
+        logBody.textContent = "";
+      }
+      logBody.textContent += (logBody.textContent ? "\n" : "") + line;
+      logBody.scrollTop = logBody.scrollHeight;
+    }
+
+    function resetSimulation() {
+      clearAllTimeouts();
+      running = false;
+      startBtn.disabled = false;
+      laneState = lanes.map(() => ({ stageIndex: -1, active: false }));
+      lanes.forEach(({ id }) => {
+        hidePacket(id);
+        setStatus(id, "Idle");
+      });
+      logBody.innerHTML = '<span class="dim">Press “Play parallel flow” to see events here.</span>';
+      updateSummary();
+    }
+
+    function startSimulation() {
+      resetSimulation();
+      running = true;
+      startBtn.disabled = true;
+
+      const offsets = [0, 1200, 2400]; // staggered slower starts
+
+      lanes.forEach(({ id }, idx) => {
+        schedule(() => launchForLane(id), offsets[idx]);
+      });
+    }
+
+    function launchForLane(laneId) {
+      laneState[laneId].active = true;
+      laneState[laneId].stageIndex = 0;
+      setStatus(laneId, "Sending request", "active");
+
+      const positions = getPositions(laneId);
+      moveStage(laneId, positions, 0);
+    }
+
+    function moveStage(laneId, positions, stageIndex) {
+      if (!running) return;
+      const stage = STAGES[stageIndex];
+      if (!stage) return;
+
+      laneState[laneId].stageIndex = stageIndex;
+      const x = positions[stage.node];
+      setPacket(laneId, stage.phase, x);
+
+      let statusText = "";
+      switch (stage.name) {
+        case "client-outbound":
+          statusText = "Request → Uvicorn";
+          break;
+        case "uvicorn-inbound":
+          statusText = "In Uvicorn (shared)";
+          break;
+        case "fastapi-inbound":
+          statusText = "In FastAPI (shared)";
+          break;
+        case "endpoint-processing":
+          statusText = "Endpoint logic";
+          break;
+        case "fastapi-outbound":
+          statusText = "FastAPI response";
+          break;
+        case "uvicorn-outbound":
+          statusText = "Uvicorn response";
+          break;
+        case "client-response":
+          statusText = "Response received";
+          break;
+        default:
+          statusText = "In flight";
+      }
+
+      if (stageIndex < STAGES.length - 1) {
+        setStatus(laneId, statusText, "active");
+      } else {
+        setStatus(laneId, "Done", "done");
+        laneState[laneId].active = false;
+      }
+
+      logEvent(laneId, stage);
+      updateSummary();
+
+      if (stageIndex < STAGES.length - 1) {
+        const base = 1600;         // slow steps
+        const jitter = Math.random() * 900;
+        schedule(() => moveStage(laneId, positions, stageIndex + 1), base + jitter);
+      } else {
+        schedule(() => {
+          hidePacket(laneId);
+          updateSummary();
+          if (laneState.every(s => !s.active)) {
+            running = false;
+            startBtn.disabled = false;
+          }
+        }, 1100);
+      }
+    }
+
+    // Lane click: highlight only (for talking through)
+    document.querySelectorAll(".lane").forEach(el => {
+      el.addEventListener("click", () => {
+        document.querySelectorAll(".lane").forEach(l => l.classList.remove("active"));
+        el.classList.add("active");
+      });
+    });
+
+    startBtn.addEventListener("click", startSimulation);
+    resetBtn.addEventListener("click", resetSimulation);
+    resetSimulation();
+  </script>
+</body>
+</html>
