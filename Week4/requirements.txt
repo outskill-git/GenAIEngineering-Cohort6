@@ -1,0 +1,7 @@
+datasets
+sentence-transformers
+lancedb
+transformers
+torch
+pandas
+tqdm
