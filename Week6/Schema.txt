@@ -1,0 +1,48 @@
+Album
+The Album table contains information about music albums, with each album identified by a unique AlbumId. It stores details such as the album's Title and the ArtistId associated with it. The table also includes a BLOB column, potentially used to store additional data like album artwork or other binary content.
+Artist
+The Artist table contains key information about individual artists, with a unique identifier for each artist stored in the ArtistId column. The Name column stores the name of each artist as a string with a maximum length of 120 characters. This table appears to serve as a reference or lookup table for artist information.
+Customer
+The Customer table contains key information about individual customers, including their personal details, contact information, and address. It also stores the identity of the support representative assigned to each customer. The table serves as a central repository for customer data, likely used in a sales, marketing, or customer relationship management context.
+Employee
+This table, named Employee, contains personal and professional details of employees within an organization. The table stores information such as employee identification, name, job title, contact details, and employment history. It also includes demographic data like birthdate, address, and hire date, providing a comprehensive overview of each employee's profile.
+Genre
+The Genre table contains information about different music genres. It has two columns: GenreId, a unique identifier for each genre, and Name, which stores the name of the genre. This table serves as a repository for various music genres, providing a standardized list for potential use in other music-related tables.
+Invoice
+This table contains invoice information, including unique identifiers, customer details, billing addresses, and total costs. Each row represents a single invoice, with the InvoiceId serving as the primary key to distinguish between them. The table provides a comprehensive overview of invoice data, including when it was issued, where it was billed, and the total amount due.
+InvoiceLine
+The InvoiceLine table contains details of individual items within an invoice, with each row representing a unique line item. It captures information such as the invoice it belongs to, the specific track or product, its unit price, and the quantity purchased. The table is linked to invoices through the InvoiceId column, allowing for the breakdown of invoice totals into component parts.
+MediaType
+The MediaType table contains a list of different media types, with a unique identifier for each type. The table has two columns: MediaTypeId, which serves as the primary key, and Name, which stores the description of each media type. This table appears to be a reference or lookup table, providing a centralized location for media type information.
+Playlist
+The Playlist table contains information about music playlists, with each playlist uniquely identified by a PlaylistId. The Name column stores the title or name of each playlist, allowing for up to 120 characters. This table serves as a repository for playlist metadata, providing a foundation for managing and organizing music collections.
+PlaylistTrack
+This table contains many-to-many relationships between playlists and tracks. It serves as a bridge table, allowing multiple tracks to be associated with multiple playlists. The PlaylistId and TrackId columns, which are both primary keys, uniquely identify each playlist-track combination.
+Track
+The Track table contains information about individual music tracks, including their unique identifier, name, and details about the album and genre they belong to. It also stores technical details such as the track's duration, file size, and price. This table appears to be part of a music database, likely used in a music store or streaming service application.
+foo
+The foo table contains two columns: bar, an integer field, and baz, a variable character field with a maximum length of 20 characters. This table appears to store simple data with a numeric identifier and a corresponding text description. The table's purpose seems to be storing basic data with integer and string values.
+Album
+['AlbumId (INTEGER ,PK)', 'Title (NVARCHAR(160))', 'ArtistId (INTEGER)', 'Column1 (BLOB)']
+Artist
+['ArtistId (INTEGER ,PK)', 'Name (NVARCHAR(120))']
+Customer
+['CustomerId (INTEGER ,PK)', 'FirstName (NVARCHAR(40))', 'LastName (NVARCHAR(20))', 'Company (NVARCHAR(80))', 'Address (NVARCHAR(70))', 'City (NVARCHAR(40))', 'State (NVARCHAR(40))', 'Country (NVARCHAR(40))', 'PostalCode (NVARCHAR(10))', 'Phone (NVARCHAR(24))', 'Fax (NVARCHAR(24))', 'Email (NVARCHAR(60))', 'SupportRepId (INTEGER)']
+Employee
+['EmployeeId (INTEGER ,PK)', 'LastName (NVARCHAR(20))', 'FirstName (NVARCHAR(20))', 'Title (NVARCHAR(30))', 'ReportsTo (INTEGER)', 'BirthDate (DATETIME)', 'HireDate (DATETIME)', 'Address (NVARCHAR(70))', 'City (NVARCHAR(40))', 'State (NVARCHAR(40))', 'Country (NVARCHAR(40))', 'PostalCode (NVARCHAR(10))', 'Phone (NVARCHAR(24))', 'Fax (NVARCHAR(24))', 'Email (NVARCHAR(60))']
+Genre
+['GenreId (INTEGER ,PK)', 'Name (NVARCHAR(120))']
+Invoice
+['InvoiceId (INTEGER ,PK)', 'CustomerId (INTEGER)', 'InvoiceDate (DATETIME)', 'BillingAddress (NVARCHAR(70))', 'BillingCity (NVARCHAR(40))', 'BillingState (NVARCHAR(40))', 'BillingCountry (NVARCHAR(40))', 'BillingPostalCode (NVARCHAR(10))', 'Total (NUMERIC(10, 2))']
+InvoiceLine
+['InvoiceLineId (INTEGER ,PK)', 'InvoiceId (INTEGER)', 'TrackId (INTEGER)', 'UnitPrice (NUMERIC(10, 2))', 'Quantity (INTEGER)']
+MediaType
+['MediaTypeId (INTEGER ,PK)', 'Name (NVARCHAR(120))']
+Playlist
+['PlaylistId (INTEGER ,PK)', 'Name (NVARCHAR(120))']
+PlaylistTrack
+['PlaylistId (INTEGER ,PK)', 'TrackId (INTEGER ,PK)']
+Track
+['TrackId (INTEGER ,PK)', 'Name (NVARCHAR(200))', 'AlbumId (INTEGER)', 'MediaTypeId (INTEGER)', 'GenreId (INTEGER)', 'Composer (NVARCHAR(220))', 'Milliseconds (INTEGER)', 'Bytes (INTEGER)', 'UnitPrice (NUMERIC(10, 2))']
+foo
+['bar (INTEGER)', 'baz (VARCHAR(20))']
