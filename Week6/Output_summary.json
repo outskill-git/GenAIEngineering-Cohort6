@@ -1,0 +1,26 @@
+{
+  "Jane Peacock": [
+    {
+      "SupportEmail": "jane@chinookcorp.com",
+      "Rep_Country": "Canada",
+      "Total_Invoice": 833.04,
+      "Last_Invoice": "2011-12-22 00:00:00"
+    }
+  ],
+  "Margaret Park": [
+    {
+      "SupportEmail": "margaret@chinookcorp.com",
+      "Rep_Country": "Canada",
+      "Total_Invoice": 775.4,
+      "Last_Invoice": "2011-12-09 00:00:00"
+    }
+  ],
+  "Steve Johnson": [
+    {
+      "SupportEmail": "steve@chinookcorp.com",
+      "Rep_Country": "Canada",
+      "Total_Invoice": 720.16,
+      "Last_Invoice": "2011-12-05 00:00:00"
+    }
+  ]
+}

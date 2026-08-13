@@ -3,7 +3,7 @@ from sqlalchemy import inspect, text, create_engine
 import csv
 import io
 import dotenv
-from groq import Groq
+from hf_llm import hf_chat_completion
 import json
 import re
 import os
@@ -23,11 +23,10 @@ else:
     print ("\n DB Files does not exist")
     exit ()
 
-# LLM Client
+# LLM model
 dotenv.load_dotenv ()
-G_client = Groq()
-# G_client = Groq(api_key="Your Key")
-G_Model = "llama-3.3-70b-versatile"
+G_client = "hf_chat"
+Model = "google/flan-t5-base"
 
 def get_table_schema_as_csv(connection, table_name):
     """
@@ -72,7 +71,7 @@ def extract_sql_query(text):
     else:
         return text.strip()  # it's just raw SQL
 
-def RAG_Response (Client, Model, conn, table_name, Prompt) :
+def RAG_Response(Client, Model, conn, table_name, Prompt) :
 
     ## For a User prompt, get the SQL query to be raised.
     # Get the table schema with sameple data (CSV format)
@@ -88,7 +87,7 @@ def RAG_Response (Client, Model, conn, table_name, Prompt) :
                 If question is not relevant to schema, say 'No relevant data'.\
                 "
 
-    Schema = get_table_schema_as_csv (conn, table_name)
+    Schema = get_table_schema_as_csv(conn, table_name)
     # print (Schema)
 
     messages=[
@@ -102,11 +101,10 @@ def RAG_Response (Client, Model, conn, table_name, Prompt) :
             "content": f"Table Name : {table_name} \n"+"Schema :\n"+Schema+"\n Question : \n"+Prompt
         }
     ]
-    completion = Client.chat.completions.create(
+    completion = hf_chat_completion(
         messages=messages,
         model=Model,
         # temperature=0.0
-
     )
 
     ## Get the query string
@@ -147,7 +145,7 @@ def RAG_Response (Client, Model, conn, table_name, Prompt) :
             "content":"Context : \n"+ json_output + "Query : \n" + Prompt
         }
     ]
-    completion = Client.chat.completions.create(
+    completion = hf_chat_completion(
         messages=messages,
         model=Model,
     )
@@ -156,5 +154,5 @@ def RAG_Response (Client, Model, conn, table_name, Prompt) :
     return Response
 
 ## invoke the RAG pipeline for a run
-G_Response = RAG_Response (G_client, G_Model, conn, table_name, Prompt)
-print (G_Response)
+G_Response = RAG_Response(G_client, Model, conn, table_name, Prompt)
+print(G_Response)
