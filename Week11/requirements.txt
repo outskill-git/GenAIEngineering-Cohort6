@@ -1,0 +1,6 @@
+# Week 11 — OpenAI Agents SDK
+openai-agents[voice]==0.22.3   # pinned: this SDK moves fast and renames things
+mcp>=1.19,<2                   # FastMCP (mcp.server.fastmcp) only exists in 1.x
+python-dotenv>=1.0
+numpy>=1.26                    # voice: audio buffers
+python-pptx>=1.0               # only needed to rebuild the deck
