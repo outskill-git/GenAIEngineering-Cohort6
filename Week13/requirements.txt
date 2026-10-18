@@ -1,0 +1,9 @@
+# Week 13 — LangGraph
+langchain==1.4.2
+langchain-openai==1.6.2
+langgraph==1.2.11
+langgraph-checkpoint-sqlite==3.1.1   # SqliteSaver (session 3): a pause that survives a restart
+python-dotenv>=1.0
+pandas>=2.0
+python-pptx>=1.0                     # only to rebuild the deck
+openai-agents==0.22.3         # session 1 runs the Agents SDK next to LangChain, live
