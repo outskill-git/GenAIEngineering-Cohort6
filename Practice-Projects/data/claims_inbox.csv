@@ -1,0 +1,27 @@
+claim_ref,shipment_id,customer_id,claim_type,amount_claimed_inr,filed_at,documents_attached,customer_note
+NEW3001,ARW700040,C1000,SLA_BREACH,8970,2026-08-31,waybill,Shipment reached far beyond the committed date.
+NEW3002,ARW700146,C1030,SLA_BREACH,7275,2026-08-22,waybill,Shipment reached far beyond the committed date.
+NEW3003,ARW700174,C1056,SLA_BREACH,920,2026-09-09,waybill,Shipment reached far beyond the committed date.
+NEW3004,ARW700261,C1009,SLA_BREACH,12896,2026-08-21,waybill,Shipment reached far beyond the committed date.
+NEW3005,ARW700333,C1031,SLA_BREACH,8100,2026-08-25,waybill,Shipment reached far beyond the committed date.
+NEW3006,ARW700360,C1021,SLA_BREACH,3224,2026-08-19,waybill,Shipment reached far beyond the committed date.
+NEW3007,ARW700013,C1030,SLA_BREACH,2985,2026-08-19,waybill,
+NEW3008,ARW700044,C1007,SLA_BREACH,10448,2026-08-23,waybill,
+NEW3009,ARW700045,C1020,SLA_BREACH,8410,2026-08-19,waybill,"Sorry for the delay in writing in, our accounts team only spotted this now."
+NEW3010,ARW700487,C1048,DAMAGE,1593,2026-08-13,photos;pod,"Carton arrived crushed, parts inside are bent."
+NEW3011,ARW700024,C1038,DAMAGE,20456,2026-09-13,photos;pod,Goods damaged on arrival.
+NEW3012,ARW700345,C1047,DAMAGE,336651,2026-06-16,photos;pod,Goods damaged on arrival.
+NEW3013,ARW700292,C1046,DAMAGE,25737,2026-07-13,photos,Battery pack damaged in transit.
+NEW3014,ARW700017,C1039,LOSS,6208,2026-08-16,non_delivery_declaration,Consignee confirms nothing was received.
+NEW3015,ARW700063,C1029,LOSS,79151,2026-09-11,non_delivery_declaration,Consignee confirms nothing was received.
+NEW3016,ARW700103,C1007,LOSS,54567,2026-07-07,non_delivery_declaration,"Nothing delivered yet, please settle."
+NEW3017,ARW700130,C1058,LOSS,40228,2026-08-31,,"Please process, I will send paperwork later."
+NEW3018,ARW700324,C1005,SLA_BREACH,6536,2026-07-29,waybill,Transporters' strike was announced after we booked; please compensate.
+NEW3019,ARW700354,C1013,SLA_BREACH,5572,2026-07-30,waybill,Transporters' strike was announced after we booked; please compensate.
+NEW3020,ARW700004,C1012,DAMAGE,115691,2026-09-14,photos;pod,"High value consignment, please treat as priority."
+NEW3021,ARW700189,C1015,DAMAGE,275530,2026-06-25,photos;pod,"High value consignment, please treat as priority."
+NEW3022,ARW700279,C1044,DAMAGE,122857,2026-09-24,photos;pod,"High value consignment, please treat as priority."
+NEW3023,ARW700412,C1005,DAMAGE,195318,2026-09-04,photos;pod,"High value consignment, please treat as priority."
+NEW3024,ARW700197,C1007,SLA_BREACH,3082,2026-09-22,waybill,Another delay on our account.
+NEW3025,ARW700364,C1000,SLA_BREACH,2925,2026-08-30,waybill,Another delay on our account.
+NEW3026,ARW700254,C1039,SLA_BREACH,1504,2026-08-19,waybill,Another delay on our account.

@@ -1,0 +1,13 @@
+hub_code,city,state,is_metro,avg_dwell_hours
+DEL,Delhi,Delhi,True,8.7
+BOM,Mumbai,Maharashtra,True,13.6
+BLR,Bengaluru,Karnataka,True,9.5
+MAA,Chennai,Tamil Nadu,True,13.8
+CCU,Kolkata,West Bengal,True,10.0
+HYD,Hyderabad,Telangana,True,5.8
+PNQ,Pune,Maharashtra,False,10.7
+AMD,Ahmedabad,Gujarat,False,7.6
+JAI,Jaipur,Rajasthan,False,13.9
+NAG,Nagpur,Maharashtra,False,12.7
+GAU,Guwahati,Assam,False,13.6
+COK,Kochi,Kerala,False,9.9

@@ -1,0 +1,61 @@
+customer_id,company_name,tier,escalation_sla_hours,monthly_volume,account_manager
+C1000,Copper Leaf Retail Pvt Ltd,Gold,24,82,A. Khan
+C1001,Trident Foods Pvt Ltd,Gold,24,254,R. Iyer
+C1002,Sunrise Exports Pvt Ltd,Gold,24,344,S. Banerjee
+C1003,Pallava Foods Pvt Ltd,Gold,24,191,R. Iyer
+C1004,Blue Orchid Exports Pvt Ltd,Gold,24,275,S. Banerjee
+C1005,Trident Industries Pvt Ltd,Gold,24,138,S. Banerjee
+C1006,Orbit Industries Pvt Ltd,Gold,24,92,M. Pillai
+C1007,Orbit Mobility Pvt Ltd,Gold,24,316,S. Banerjee
+C1008,Zenith Retail Pvt Ltd,Gold,24,109,R. Iyer
+C1009,Mahalaxmi Textiles Pvt Ltd,Gold,24,200,S. Banerjee
+C1010,Zenith Retail Pvt Ltd,Silver,48,381,M. Pillai
+C1011,Sunrise Industries Pvt Ltd,Silver,48,134,D. Chauhan
+C1012,Copper Leaf Industries Pvt Ltd,Silver,48,283,D. Chauhan
+C1013,Narmada Traders Pvt Ltd,Silver,48,318,S. Banerjee
+C1014,Orbit Traders Pvt Ltd,Silver,48,137,A. Khan
+C1015,Zenith Foods Pvt Ltd,Silver,48,395,M. Pillai
+C1016,Keystone Pharma Pvt Ltd,Silver,48,287,R. Iyer
+C1017,Copper Leaf Retail Pvt Ltd,Silver,48,135,R. Iyer
+C1018,Zenith Retail Pvt Ltd,Silver,48,394,S. Banerjee
+C1019,Pallava Pharma Pvt Ltd,Silver,48,197,D. Chauhan
+C1020,Keystone Retail Pvt Ltd,Silver,48,350,D. Chauhan
+C1021,Keystone Exports Pvt Ltd,Silver,48,293,M. Pillai
+C1022,Orbit Industries Pvt Ltd,Silver,48,373,M. Pillai
+C1023,Orbit Traders Pvt Ltd,Silver,48,153,D. Chauhan
+C1024,Narmada Traders Pvt Ltd,Silver,48,315,S. Banerjee
+C1025,Orbit Industries Pvt Ltd,Silver,48,111,M. Pillai
+C1026,Trident Pharma Pvt Ltd,Silver,48,305,R. Iyer
+C1027,Blue Orchid Pharma Pvt Ltd,Silver,48,48,S. Banerjee
+C1028,Copper Leaf Industries Pvt Ltd,Bronze,72,128,S. Banerjee
+C1029,Sunrise Foods Pvt Ltd,Bronze,72,136,R. Iyer
+C1030,Keystone Traders Pvt Ltd,Bronze,72,29,D. Chauhan
+C1031,Mahalaxmi Mobility Pvt Ltd,Bronze,72,235,D. Chauhan
+C1032,Blue Orchid Mobility Pvt Ltd,Bronze,72,174,M. Pillai
+C1033,Copper Leaf Traders Pvt Ltd,Bronze,72,101,A. Khan
+C1034,Keystone Traders Pvt Ltd,Bronze,72,232,A. Khan
+C1035,Orbit Exports Pvt Ltd,Bronze,72,80,M. Pillai
+C1036,Blue Orchid Foods Pvt Ltd,Bronze,72,339,M. Pillai
+C1037,Narmada Mobility Pvt Ltd,Bronze,72,394,D. Chauhan
+C1038,Trident Foods Pvt Ltd,Bronze,72,208,M. Pillai
+C1039,Sunrise Traders Pvt Ltd,Bronze,72,339,S. Banerjee
+C1040,Sunrise Exports Pvt Ltd,Bronze,72,215,D. Chauhan
+C1041,Sunrise Retail Pvt Ltd,Bronze,72,329,D. Chauhan
+C1042,Zenith Industries Pvt Ltd,Bronze,72,348,R. Iyer
+C1043,Mahalaxmi Retail Pvt Ltd,Bronze,72,9,S. Banerjee
+C1044,Blue Orchid Traders Pvt Ltd,Bronze,72,240,A. Khan
+C1045,Zenith Foods Pvt Ltd,Bronze,72,128,R. Iyer
+C1046,Sunrise Mobility Pvt Ltd,Bronze,72,78,M. Pillai
+C1047,Narmada Textiles Pvt Ltd,Bronze,72,356,R. Iyer
+C1048,Keystone Traders Pvt Ltd,Bronze,72,341,M. Pillai
+C1049,Zenith Industries Pvt Ltd,Bronze,72,354,D. Chauhan
+C1050,Narmada Textiles Pvt Ltd,Bronze,72,109,S. Banerjee
+C1051,Blue Orchid Foods Pvt Ltd,Bronze,72,105,A. Khan
+C1052,Narmada Textiles Pvt Ltd,Bronze,72,273,S. Banerjee
+C1053,Keystone Traders Pvt Ltd,Bronze,72,45,S. Banerjee
+C1054,Blue Orchid Retail Pvt Ltd,Bronze,72,314,S. Banerjee
+C1055,Blue Orchid Industries Pvt Ltd,Bronze,72,342,S. Banerjee
+C1056,Copper Leaf Mobility Pvt Ltd,Bronze,72,297,A. Khan
+C1057,Narmada Textiles Pvt Ltd,Bronze,72,291,M. Pillai
+C1058,Copper Leaf Traders Pvt Ltd,Bronze,72,150,S. Banerjee
+C1059,Orbit Foods Pvt Ltd,Bronze,72,175,D. Chauhan

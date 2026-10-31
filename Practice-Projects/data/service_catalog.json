@@ -1,0 +1,22 @@
+{
+  "service_levels": {
+    "Express": {
+      "min_hours": 24,
+      "max_hours": 48
+    },
+    "Standard": {
+      "min_hours": 48,
+      "max_hours": 96
+    },
+    "Economy": {
+      "min_hours": 96,
+      "max_hours": 168
+    }
+  },
+  "prohibited_without_declaration": [
+    "Lithium Batteries"
+  ],
+  "northeast_hubs": [
+    "GAU"
+  ]
+}
