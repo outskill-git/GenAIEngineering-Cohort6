@@ -1,0 +1,20 @@
+# Week 14 — Transformers from scratch, and Multimodal RAG
+
+# --- session 1: transformer from scratch (no API key, no internet) ---------
+torch>=2.2
+matplotlib>=3.8
+numpy>=1.26
+
+# --- session 2: multimodal RAG (needs OPENAI_API_KEY) ----------------------
+langchain==1.4.2
+langchain-openai==1.6.2
+langchain-text-splitters==1.1.2
+python-dotenv>=1.0
+pillow>=10.0
+
+# Optional — only for Part 3 (CLIP joint embeddings).
+# Downloads a ~600 MB model the first time you run it, so install it BEFORE class.
+# sentence-transformers>=3.0
+
+# Only if you want to regenerate the corpus yourself (needs ffmpeg on PATH too)
+# matplotlib is already above; no other extras required

@@ -1,0 +1,38 @@
+[
+  {
+    "start_s": 0,
+    "text": "Welcome to training module seven, replacing a Lumio string inverter."
+  },
+  {
+    "start_s": 6,
+    "text": "Step one. Switch off the AC isolator and lock it off before you touch anything."
+  },
+  {
+    "start_s": 14,
+    "text": "Step two. Open the DC isolator at the string combiner."
+  },
+  {
+    "start_s": 22,
+    "text": "Step three, and this is the one people skip. Wait five minutes after isolating before you open the inverter lid. The capacitors inside stay charged."
+  },
+  {
+    "start_s": 32,
+    "text": "Step four. Confirm zero volts across the DC terminals with a meter rated for the job."
+  },
+  {
+    "start_s": 42,
+    "text": "Step five. Release the MC4 connectors with the proper release tool. Never use pliers."
+  },
+  {
+    "start_s": 52,
+    "text": "Step six. Two M8 bolts hold the bracket. Support the unit as you remove the second one."
+  },
+  {
+    "start_s": 62,
+    "text": "Step seven. Torque the DC terminals to four point five newton metres with a torque driver."
+  },
+  {
+    "start_s": 72,
+    "text": "Step eight. Re-energise in reverse order: DC first, then AC, then confirm the site is reporting in the portal."
+  }
+]

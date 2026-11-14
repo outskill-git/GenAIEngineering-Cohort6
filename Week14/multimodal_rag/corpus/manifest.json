@@ -1,0 +1,108 @@
+[
+  {
+    "asset": "images/chart_yield_normal.png",
+    "modality": "image",
+    "kind": "performance chart",
+    "ground_truth": "Bar chart of daily solar yield for site PUN-114, all days around 20-22 kWh, no fault.",
+    "unique_fact": null
+  },
+  {
+    "asset": "images/chart_yield_fault.png",
+    "modality": "image",
+    "kind": "performance chart",
+    "ground_truth": "Bar chart of daily yield for site PUN-114 week of 10 Aug 2026 showing a sharp drop to 4.2 kWh on Wednesday and 5.1 kWh on Thursday, annotated 'string 2 offline'.",
+    "unique_fact": "Yield collapsed to 4.2 kWh on Wednesday 12 Aug 2026 because string 2 went offline."
+  },
+  {
+    "asset": "images/chart_shading_signature.png",
+    "modality": "image",
+    "kind": "performance chart",
+    "ground_truth": "Line chart comparing expected and measured power across the day for site BLR-207; the measured curve dips sharply between 15:00 and 17:00, the signature of afternoon shading.",
+    "unique_fact": "Afternoon shading at BLR-207 appears as a dip between 15:00 and 17:00, not a whole-day loss."
+  },
+  {
+    "asset": "images/label_fault_codes.png",
+    "modality": "image",
+    "kind": "equipment label",
+    "ground_truth": "Photograph of the fault-code sticker inside a Lumio inverter cover, listing E-12 grid voltage out of range, E-19 isolation resistance low, E-27 string 2 input current zero, E-33 over-temperature derating, E-41 fan failure.",
+    "unique_fact": "Error code E-27 means string 2 input current is zero."
+  },
+  {
+    "asset": "images/diagram_dc_wiring.png",
+    "modality": "image",
+    "kind": "wiring diagram",
+    "ground_truth": "Wiring diagram figure 4.2 showing three PV strings into a string combiner and then the Lumio LMO-5K inverter, with a callout that the DC terminals must be torqued to 4.5 Nm.",
+    "unique_fact": "The inverter DC terminals must be torqued to 4.5 Nm."
+  },
+  {
+    "asset": "images/page_spec_inverter.png",
+    "modality": "image",
+    "kind": "spec sheet page",
+    "ground_truth": "Scanned specification sheet for the Lumio LMO-INV-5K inverter: 5.0 kW rated AC output, 600 V maximum DC input, MPPT range 120-500 V, 13 A per string, IP65, 7 year warranty.",
+    "unique_fact": "The LMO-INV-5K maximum DC input voltage is 600 V and warranty is 7 years."
+  },
+  {
+    "asset": "images/photo_rooftop_array.png",
+    "modality": "image",
+    "kind": "equipment photo",
+    "ground_truth": "Photograph of a rooftop solar array of eight dark panels on a blue-sky day.",
+    "unique_fact": null
+  },
+  {
+    "asset": "images/photo_mc4_connector_ok.png",
+    "modality": "image",
+    "kind": "equipment photo",
+    "ground_truth": "Close-up photograph of a healthy mated pair of black MC4 DC connectors.",
+    "unique_fact": null
+  },
+  {
+    "asset": "images/photo_mc4_connector_burnt.png",
+    "modality": "image",
+    "kind": "equipment photo",
+    "ground_truth": "Close-up photograph of an MC4 connector with a burnt, blackened contact and scorching.",
+    "unique_fact": null
+  },
+  {
+    "asset": "images/photo_inverter_unit.png",
+    "modality": "image",
+    "kind": "equipment photo",
+    "ground_truth": "Photograph of a wall-mounted white Lumio string inverter with a green status light.",
+    "unique_fact": null
+  },
+  {
+    "asset": "docs/install_overview.md",
+    "modality": "text",
+    "kind": "manual page",
+    "ground_truth": "Lumio residential installation \u2014 overview",
+    "unique_fact": null
+  },
+  {
+    "asset": "docs/maintenance_schedule.md",
+    "modality": "text",
+    "kind": "manual page",
+    "ground_truth": "Preventive maintenance schedule",
+    "unique_fact": null
+  },
+  {
+    "asset": "docs/safety_rules.md",
+    "modality": "text",
+    "kind": "manual page",
+    "ground_truth": "DC safety rules",
+    "unique_fact": null
+  },
+  {
+    "asset": "docs/warranty_and_support.md",
+    "modality": "text",
+    "kind": "manual page",
+    "ground_truth": "Warranty and support",
+    "unique_fact": null
+  },
+  {
+    "asset": "video/inverter_replacement.mp4",
+    "modality": "video",
+    "kind": "training video",
+    "duration_s": 82,
+    "ground_truth": "An eight-step training video on replacing a Lumio string inverter.",
+    "unique_fact": "You must wait five minutes after isolating before opening the inverter lid, because the capacitors stay charged."
+  }
+]
