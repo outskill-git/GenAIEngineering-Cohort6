@@ -1,0 +1,27 @@
+# Week 15 - Synthetic Data course environment
+# Requires Python 3.11, 3.12 or 3.13.  NOT 3.10 (numpy/pandas) and NOT 3.14 (crewai).
+#   python3.12 -m venv .venv && source .venv/bin/activate   (Windows: .venv\Scripts\activate)
+#   pip install -r requirements.txt
+# Original full pip-freeze kept in _backup_2026-11-09/requirements.txt
+
+# Notebooks 0-6: rule-based and statistical data generation
+numpy==2.4.6
+pandas==3.0.5
+scipy==1.17.1
+matplotlib==3.11.1
+seaborn==0.13.2
+scikit-learn==1.9.0
+Faker==40.36.0
+openpyxl==3.1.5
+pyarrow==25.0.0
+
+# Jupyter
+jupyterlab
+ipykernel
+
+# Notebook 7: CrewAI synthetic legal text (needs OpenRouter + Serper keys in .env)
+# Note: crewai-tools cannot install on Intel Macs (no lancedb wheels); use Apple Silicon, Windows, Linux or Colab.
+crewai==1.15.39
+crewai-tools==1.15.39
+python-dotenv
+requests
